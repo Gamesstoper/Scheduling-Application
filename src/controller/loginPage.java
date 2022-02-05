@@ -80,13 +80,15 @@ public class loginPage implements Initializable {
     public void appointmentReminderAlert(){
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime noPlus15 = now.plusMinutes(15);
-
+        System.out.println("Now: " + now);
+        System.out.println("Now + 15: " + noPlus15);
         FilteredList<appointment> fd = new FilteredList<>(appointmentReminder);
-        /**Lambda*/
-        fd.setPredicate(row -> {
+        /**Lambda*/fd.setPredicate(row -> {
+            System.out.println("Row Start Time:" + row.getStartTime());
             LocalDateTime rowDate = LocalDateTime.parse(row.getStartTime(),datetimeDTF);
-            return rowDate.isAfter(now.minusMinutes(1)) && rowDate.isBefore(noPlus15);
-        });
+            System.out.println("Row Date: " + rowDate);
+            return rowDate.isAfter(now.minusMinutes(1)) && rowDate.isBefore(noPlus15);}
+        );
         if (fd.isEmpty()){
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Upcoming Appointment Reminder");
@@ -119,25 +121,21 @@ public class loginPage implements Initializable {
             ps.setInt(1, userID);
             ResultSet rs = ps.executeQuery();
             while (rs.next()){
-                Timestamp timestampStart = rs.getTimestamp("start");
-                ZonedDateTime startUTC = timestampStart.toLocalDateTime().atZone(ZoneId.of("UTC"));
-                ZonedDateTime newLocalStart = startUTC.withZoneSameInstant(localZoneID);
-                String startTime = newLocalStart.format(datetimeDTF);
+                String Start = rs.getString("start");
+                String End = rs.getString("end");
 
-                Timestamp timestampEnd = rs.getTimestamp("end");
-                ZonedDateTime endUTC = timestampEnd.toLocalDateTime().atZone(ZoneId.of("UTC"));
-                ZonedDateTime newLocalEnd = endUTC.withZoneSameInstant(localZoneID);
-                String endTime = newLocalEnd.format(datetimeDTF);
-                System.out.println(startTime);
-                System.out.println(endTime);
+                LocalDateTime utcStartlocal = LocalDateTime.parse(Start, datetimeDTF);
+                LocalDateTime utcEndlocal = LocalDateTime.parse(End, datetimeDTF);
+
+                String startTime = functions.utcToLocal(utcStartlocal);
+                String endTime = functions.utcToLocal(utcEndlocal);
+
+                System.out.println("Appointment List Start: " + startTime);
+                System.out.println("Appointment List End: " + endTime);
 
                 int appointmentID= rs.getInt("Appointment_ID");
                 String title = rs.getString("Title");
                 int cusID = rs.getInt("Customer_ID");
-
-                System.out.println(title);
-                System.out.println(cusID);
-                System.out.println(appointmentID);
 
                 appointmentReminder.add(new appointment(appointmentID, startTime, endTime, title,cusID));
                 System.out.println(appointmentReminder);
